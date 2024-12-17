@@ -18,4 +18,15 @@ FEATURE_SET:
     'date_shop_category_sub_type_item_cnt_mean': ['date_block_num', 'shop_id', 'category_sub_type']
     'date_block_num_city_item_id_item_cnt_mean': ['date_block_num', 'city', 'item_id']
 
+PARAM_SET:
+    'n_estimators': [100, 200, 300, 400, 500, 600]
+    'max_depth': [6, 7, 8, 9, 10]
+    'min_child_weight': [1, 5, 10, 300]
+    'colsample_bytree': [0.3, 0.6, 0.8, 1.0]
+    'subsample': [0.6, 0.8, 1.0]
+    'learning_rate': [0.01, 0.05, 0.1, 0.3]
+    'gamma': [0, 0.1, 0.2, 0.3]
+    'eval_metric' : ['rmse']
+    'early_stopping_rounds' : [10]
+    'early_stopping_rounds' : [10]
 

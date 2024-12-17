@@ -3,6 +3,18 @@ import numpy as np
 from sklearn.metrics import mean_squared_error  # For calculation RMSE
 
 class validator:
+    """
+    A class to perform validation of a machine learning model using time-based data splits.
+
+    This class uses a sliding window approach for model validation, allowing users to assess
+    the model's performance on different folds of the dataset.
+
+    Example usage:
+    model = RandomForestRegressor()
+    validator = Validator(model)
+    report = validator.validation(data, start_size_window=1, end_size_of_window=3, number_of_fold=2)
+
+    """
     
     def __init__(self, model):
         self.model = model
