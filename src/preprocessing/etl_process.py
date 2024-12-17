@@ -2,166 +2,139 @@ import os
 import re
 
 import pandas as pd
-import yaml
-
-
+from sklearn.preprocessing import OrdinalEncoder
+from global_var import SHOP_DUPLICATE_SET, CORRECT_CITY_NAME
 
 
 class ETL:
     """
-    A class to perform Extract, Transform, Load (ETL) operations on data.
+     A class to perform Extract, Transform, Load (ETL) operations on data.
 
     Attributes:
         path_to_data (str): Path to the directory containing the data.
 
-    Methods:
-        extract(): Extracts data from the source.
-        transform(): Transforms the extracted data.
-        load(): Loads the transformed data into train and test DataFrames.
+    Method:
+        process(): Execute the full ETL pipeline
 
     Example usage:
-        path_to_data = './data'  # Specify the path to your data
+        path_to_data = r'./data'  # Specify the path to your data
         etl = ETL(path_to_data)
-        etl.extract()
-        etl.transform()
-        train_df, test_df = etl.load()
-        print(train_df)
-        print(test_df)
-    """
+        etl.process()
 
+        processed_data = etl.data
+    """
     def __init__(self, path_to_data):
         self.path_to_data = path_to_data
+        self.shop_duplicate_set = SHOP_DUPLICATE_SET
+        self.city_name_mapping = CORRECT_CITY_NAME
+        self.data = {}
 
-    def extract(self):
-        """Loading data from files."""
-        self.sales_train_data = pd.read_csv(os.path.join(self.path_to_data, "sales_train.csv"))
-        self.test_data = pd.read_csv(os.path.join(self.path_to_data, "test.csv"))
-        self.items_data = pd.read_csv(os.path.join(self.path_to_data, "items.csv"))
-        self.item_categories_data = pd.read_csv(os.path.join(self.path_to_data, "item_categories.csv"))
-        self.shops_data = pd.read_csv(os.path.join(self.path_to_data, "shops.csv"))
+    def extract_data(self):
+        """Load all data from files and store it in the class."""
+        self.data['sales_train_data'] = pd.read_csv(os.path.join(self.path_to_data, "sales_train.csv"))
+        self.data['test_data'] = pd.read_csv(os.path.join(self.path_to_data, "test.csv")).set_index('ID')
+        self.data['items_data'] = pd.read_csv(os.path.join(self.path_to_data, "items.csv"))
+        self.data['item_categories_data'] = pd.read_csv(os.path.join(self.path_to_data, "item_categories.csv"))
+        self.data['shops_data'] = pd.read_csv(os.path.join(self.path_to_data, "shops.csv"))
+        self.data['sub_data'] = pd.read_csv(os.path.join(self.path_to_data, "sample_submission.csv"))
 
-    def _merge_data(self):
-        """Merging data by identifiers."""
-        for i, table in enumerate([self.sales_train_data, self.test_data]):
-            for merge_table, merge_key in [
-                (self.shops_data, "shop_id"),
-                (self.items_data, "item_id"),
-                (self.item_categories_data, "item_category_id")
-            ]: 
+    def remove_outliers(self):
+        """Remove outliers from sales_train_data."""
+        self.data['sales_train_data'] = self.data['sales_train_data'][
+            (self.data['sales_train_data']['item_cnt_day'] < 1000) &
+            (self.data['sales_train_data']['item_price'] < 300000) &
+            (self.data['sales_train_data']['item_price'] > 0)
+        ]
 
-                table = pd.merge(
-                    table,
-                    merge_table,
-                    on=merge_key,
-                    how="left"
-                )
+    def replace_duplicate_shop_ids(self):
+        """Replace duplicate shop IDs in all relevant datasets."""
+        for key in ['sales_train_data', 'test_data', 'shops_data']:
+            for old_id, new_id in self.shop_duplicate_set.items():
+                self.data[key].loc[self.data[key]['shop_id'] == old_id, 'shop_id'] = new_id
 
-                if i == 0:
-                    self.sales_train_data = table
-                else:
-                    self.test_data = table
+    def extract_shop_subcategories(self):
+        """Extract subcategories for shops_data."""
+        shops_data = self.data['shops_data']
+        shops_data['city'] = shops_data['shop_name'].apply(lambda x: x.split(' ')[0])
+        shops_data['shop_type'] = shops_data['shop_name'].apply(lambda x: x.split(' ')[1] if len(x.split(' ')) > 1 else 'unknown')
 
-    def _recount_and_clean_columns_in_data(self):
-        """Grouping and cleaning data by key columns."""
-        key_columns = self.sales_train_data.columns.tolist()
-        key_columns.remove("item_cnt_day")
+        shop_type_count = shops_data['shop_type'].value_counts()
+        valid_shop_types = shop_type_count[shop_type_count >= 5].index.to_list()
 
-        self.sales_train_data = (
-            self.sales_train_data.groupby(
-            key_columns
-            )["item_cnt_day"]
-            .sum()
-            .reset_index()
+        shops_data['shop_type'] = shops_data['shop_type'].apply(
+            lambda x: x if x in valid_shop_types else 'other'
+        )
+        self.data['shops_data'] = shops_data
+
+    def extract_category_subcategories(self):
+        """Extract subcategories for item_categories_data."""
+        categories_data = self.data['item_categories_data']
+        categories_data['item_category_type'] = categories_data['item_category_name'].apply(lambda x: x.split(' ')[0])
+        categories_data['item_category_type'] = categories_data['item_category_type'].replace(
+            {'Игровые': 'Games', 'Аксессуары': 'Games'}
         )
 
-        self.test_data = self.test_data.drop('ID', axis=1)
+        category_type_count = categories_data['item_category_type'].value_counts()
+        valid_category_types = category_type_count[category_type_count > 5].index.to_list()
 
-        # Converting date to datetime format
-        self.sales_train_data["date"] = pd.to_datetime(
-            self.sales_train_data["date"], dayfirst=True
+        categories_data['item_category_type'] = categories_data['item_category_type'].apply(
+            lambda x: x if x in valid_category_types else 'other'
+        )
+        categories_data['category_sub_type'] = categories_data['item_category_name'].apply(
+            lambda x: x.split('-')[1].strip() if '-' in x else x.split(' ')[-1]
+        )
+        self.data['item_categories_data'] = categories_data
+
+    def calculate_revenue(self):
+        """Create revenue feature for sales_train_data."""
+        self.data['sales_train_data']['revenue'] = (
+            self.data['sales_train_data']['item_price'] * self.data['sales_train_data']['item_cnt_day']
         )
 
-    def _normalize_data(self):
-        """Normalization of shop and item names."""
-        def normalize_name(name):
-            """Function for string normalization."""
-            name = re.sub(r"[^а-яё0-9a-z]", "", name.lower())
-            name = re.sub(r"\s+", " ", name)
-            return name
+    def correct_city_names(self):
+        """Correct city names for shops_data."""
+        self.data['shops_data']['city'] = self.data['shops_data']['city'].replace(self.city_name_mapping)
 
-        def normalize_column(data, column):
-            """Apply normalization to a specific column."""
-            data[column] = data[column].apply(normalize_name)
-            return data
+    def transform_test_data(self):
+        """Transform test data into the appropriate format."""
+        test_data = self.data['test_data']
+        test_data['date_block_num'] = 34
+        test_data['shop_id'] = test_data['shop_id'].astype('int8')
+        test_data['item_id'] = test_data['item_id'].astype('int16')
+        test_data['date_block_num'] = test_data['date_block_num'].astype('int8')
+        test_data.reset_index(drop=True, inplace=True)
+        self.data['test_data'] = test_data
 
-        # Normalize shop names
-        self.shops_data = normalize_column(self.shops_data, 'shop_name')
-
-        # Normalize item names
-        self.items_data = normalize_column(self.items_data, 'item_name')
-    
-    def _load_config(self, file_path):
-        with open(file_path, 'r') as file:
-            config = yaml.safe_load(file)
-        return config
+    def encode_data(self, key, columns):
+        """Encode categorical features using OrdinalEncoder."""
+        encoder = OrdinalEncoder()
+        self.data[key][columns] = encoder.fit_transform(self.data[key][columns])
 
     def transform(self):
         """Data transformation: cleaning, handling duplicates, updating identifiers."""
-        def clean_data_with_negative_prices(data):
-            """Removing rows with negative prices."""
-            data = data[data.item_price >= 0]
-            return data
-
-        # Handling duplicates for shop data
-        def concatenate_duplicate_shops(shops_data):
-            base_dir = os.path.dirname(__file__)  
-            config_path = os.path.join(base_dir, 'config.yaml')
-
-            config = self._load_config(config_path)
-            shop_id_duplicate_mapping = config['shop_id_mapping']
+        self.remove_outliers()
+        self.replace_duplicate_shop_ids()
+        self.extract_shop_subcategories()
+        self.correct_city_names()
+        self.extract_category_subcategories()
+        self.calculate_revenue()
+        self.encode_data('shops_data', ['city', 'shop_type'])
+        self.encode_data('item_categories_data', ['category_sub_type', 'item_category_type'])
+        self.transform_test_data()
     
-            # Update shop_id based on the mapping
-            for old_id, new_id in shop_id_duplicate_mapping.items():
-                shops_data.loc[shops_data.shop_id == old_id, "shop_id"] = new_id
-                
-            return shops_data
+    
+    def process(self):
+        """Execute the full ETL pipeline."""
+        self.extract_data()
+        self.transform()
 
-        def create_shop_mapping(shops_data):
-            """Creating a shop_id mapping for duplicate removal."""
-            shop_mapping = shops_data.index.to_series().map(shops_data['shop_id']).to_dict()
-            return shop_mapping
 
-        def create_item_mapping(items_data):
-            """Creating an item_id mapping to handle duplicates by item_name."""
-            items_data = items_data.drop_duplicates(subset=["item_name"]).reset_index(drop=True)
-            item_mapping = self.items_data.set_index("item_name")["item_id"].to_dict()
-            return item_mapping
 
-        # Normalize data
-        self._normalize_data()
 
-        # Update shop data
-        self.shops_data = concatenate_duplicate_shops(self.shops_data)
 
-        # Update shop_id in test and training data
-        shop_mapping = create_shop_mapping(self.shops_data)
-        self.test_data['shop_id'] = self.test_data['shop_id'].map(shop_mapping)
-        self.sales_train_data['shop_id'] = self.sales_train_data['shop_id'].map(shop_mapping)
-
-        # Merge data
-        self._merge_data()
-
-        # Update item_id in test and training data
-        item_mapping = create_item_mapping(self.items_data)
-        self.sales_train_data["item_id"] = self.sales_train_data.item_name.map(item_mapping)
-        self.test_data["item_id"] = self.test_data.item_name.map(item_mapping)
-
-        # Group and clean data
-        self._recount_and_clean_columns_in_data()
-
-    def load(self):
-        """Loading the transformed data."""
-        train_df = self.sales_train_data
-        test_df = self.test_data
-        return train_df, test_df
+path_to_data = r'./data'
+etl = ETL(path_to_data)
+etl.process()
+processed_data = etl.data
+print(processed_data['shops_data'])
 
