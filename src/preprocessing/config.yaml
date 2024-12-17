@@ -1,4 +1,21 @@
-shop_id_mapping:
-  57: 0
-  58: 1
-  11: 10
+SHOP_DUPLICATE_SET:
+    0: 57
+    1: 58
+    10: 11
+
+CORRECT_CITY_NAME:
+    '!Якутск': 'Якутск'
+    'РостовНаДону': 'Ростов На Дону'
+    'Цифровой': 'Интернет-магазин'
+    'Выездная': 'Выездная торговля'
+
+FEATURE_SET:
+    'date_block_item_cnt_mean': ['date_block_num']
+    'date_block_num_item_id_item_cnt_mean': ['date_block_num', 'item_id']
+    'date_block_num_shop_id_item_cnt_mean': ['date_block_num', 'shop_id']
+    'date_block_num_item_category_id_item_cnt_mean': ['date_block_num', 'item_category_id']
+    'date_shop_category_item_cnt_mean': ['date_block_num', 'shop_id', 'item_category_id']
+    'date_shop_category_sub_type_item_cnt_mean': ['date_block_num', 'shop_id', 'category_sub_type']
+    'date_block_num_city_item_id_item_cnt_mean': ['date_block_num', 'city', 'item_id']
+
+
