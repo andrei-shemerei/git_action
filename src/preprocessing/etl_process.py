@@ -132,9 +132,9 @@ class ETL:
 
 
 
-path_to_data = r'./data'
-etl = ETL(path_to_data)
-etl.process()
-processed_data = etl.data
-print(processed_data['shops_data'])
+#path_to_data = r'./data'
+#etl = ETL(path_to_data)
+#etl.process()
+#processed_data = etl.data
+#print(processed_data['shops_data'])
 
