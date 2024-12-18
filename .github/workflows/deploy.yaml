@@ -37,8 +37,8 @@ jobs:
       - name: Check if version exists on TestPyPI
         id: check-version
         run: |
-          PACKAGE_NAME=$(python setup.py --name)
-          VERSION=$(python setup.py --version)
+          PACKAGE_NAME="feature_sales_prediction_engine"
+          VERSION="0.0.2"
           RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" https://test.pypi.org/pypi/$PACKAGE_NAME/$VERSION/json)
           if [ "$RESPONSE" -eq 200 ]; then
             echo "Version $VERSION of $PACKAGE_NAME already exists on TestPyPI."
