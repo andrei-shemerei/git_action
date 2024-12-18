@@ -1,7 +1,9 @@
 .i*
 data/
+
 /dist
 /build
+UNKNOWN.egg-info/
 
 **/.ipynb_checkpoints
 **/__pycache__
