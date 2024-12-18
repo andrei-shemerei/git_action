@@ -1,0 +1,56 @@
+name: Publish Package to TeatPyPI
+on: workflow_dispatch
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine setuptools wheel
+
+      - name: Build the package
+        run: python -m build
+
+      - name: Debugging output
+        run: |
+          echo "Listing dist files:"
+          ls -l dist
+
+      - name: Check if version exists on TestPyPI
+        id: check-version
+        run: |
+          PACKAGE_NAME="feature_sales_prediction_engine"
+          VERSION="0.0.2"  # Укажите текущую версию пакета
+          echo "Checking if version $VERSION of $PACKAGE_NAME exists on TestPyPI..."
+
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" https://test.pypi.org/pypi/$PACKAGE_NAME/$VERSION/json)
+          if [ "$RESPONSE" -eq 200 ]; then
+            echo "Version already exists on TestPyPI."
+            echo "exists=true" >> $GITHUB_ENV
+          else
+            echo "Version does not exist."
+            echo "exists=false" >> $GITHUB_ENV
+          fi
+
+      - name: Publish to TestPyPI
+        if: env.exists == 'false'
+        run: |
+          python -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.TESTPYPI_PASSWORD }}
+
+      - name: Skip publishing
+        if: env.exists == 'true'
+        run: echo "Version already exists on TestPyPI. Skipping publishing."
