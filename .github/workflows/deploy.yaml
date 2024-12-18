@@ -3,28 +3,56 @@ name: Publish Package
 on: workflow_dispatch
 
 jobs:
-  build:
+  publish:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.x'
 
       - name: Install dependencies
         run: |
-          pip install setuptools wheel twine
-
-      - name: Build package
+          python -m pip install --upgrade pip
+          
+      - name: Create .pypirc
         run: |
-          python setup.py sdist bdist_wheel
+          echo "[distutils]" > ~/.pypirc
+          echo "index-servers =" >> ~/.pypirc
+          echo "    testpypi" >> ~/.pypirc
+          echo "" >> ~/.pypirc
+          echo "[testpypi]" >> ~/.pypirc
+          echo "repository = https://test.pypi.org/legacy/" >> ~/.pypirc
+          echo "username = ${{ secrets.TESTPYPI_USERNAME }}" >> ~/.pypirc
+          echo "password = ${{ secrets.TESTPYPI_PASSWORD }}" >> ~/.pypirc
 
-      - name: Publish to PyPI
+      - name: Build the package
+        run: python -m build
+
+      - name: Check if version exists on TestPyPI
+        id: check-version
+        run: |
+          PACKAGE_NAME=$(python setup.py --name)
+          VERSION=$(python setup.py --version)
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" https://test.pypi.org/pypi/$PACKAGE_NAME/$VERSION/json)
+          if [ "$RESPONSE" -eq 200 ]; then
+            echo "Version $VERSION of $PACKAGE_NAME already exists on TestPyPI."
+            echo "exists=true" >> $GITHUB_ENV
+          else
+            echo "exists=false" >> $GITHUB_ENV
+          fi
+
+      - name: Publish to TestPyPI
+        if: env.exists == 'false'
+        run: twine upload --repository testpypi dist/*
         env:
-          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: |
-          twine upload dist/*
+          TWINE_USERNAME: ${{ secrets.TESTPYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.TESTPYPI_PASSWORD }}
+
+      - name: Skip publishing
+        if: env.exists == 'true'
+        run: echo "Skipping publishing as the version already exists on TestPyPI."

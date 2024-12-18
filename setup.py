@@ -1,9 +1,9 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="",
+    name="feature_sales_prediction_engine",
     version="0.0.2",
-    description="A package for feature extraction, hyperparameter optimization, and validation for item sales data.",
+    description="A package for feature sales prediction",
     packages=find_packages(),
     install_requires=[
         "numpy",
