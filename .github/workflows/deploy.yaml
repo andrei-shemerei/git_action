@@ -30,8 +30,8 @@ jobs:
       - name: Check if version exists on TestPyPI
         id: check-version
         run: |
-          PACKAGE_NAME="feature_sales_prediction_engine"
-          VERSION="0.0.2"  # Укажите текущую версию пакета
+          PACKAGE_NAME=$(python setup.py --name)
+          VERSION=$(python setup.py --version)
           echo "Checking if version $VERSION of $PACKAGE_NAME exists on TestPyPI..."
 
           RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" https://test.pypi.org/pypi/$PACKAGE_NAME/$VERSION/json)
