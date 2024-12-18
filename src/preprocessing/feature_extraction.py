@@ -171,36 +171,37 @@ def main_pipeline(data):
     matrix_df = add_item_cnt_month(matrix_df, sales_train_data, cols)
     matrix_df = append_test_data(matrix_df, test_data)
     matrix_df = merge_with_external_data(matrix_df, items_data, item_categories_data, shops_data)
-    print(1)
+    #print(1)
     # Step 2: Create lags for item_cnt_month
     lags = [1, 2, 3, 6, 12]
     train_test_df = create_lag_feature(matrix_df, lags, ['item_cnt_month'])
-    print(2)    
+    #print(2)    
     # Step 3: Create lags for mean sales values
     train_test_df = create_lags_feature_by_item_cnt_mean(train_test_df, FEATURE_SET, lags)
-    print(3)  
+    #print(3)  
     # Step 4: Process price features and create price lags
     train_test_df = process_price_features(train_test_df, sales_train_data, lags)
-    print(4) 
+    #print(4) 
     # Step 5: Process revenue features and create revenue lags
     train_test_df = process_revenue_features(train_test_df, sales_train_data, lags)
-    print(5)  
+    #print(5)  
     # Step 6: Add date features and fill missing values
     train_test_df = add_date_features(train_test_df)
     train_test_df = fill_na(train_test_df)
 
     train_test_df = train_test_df[train_test_df.date_block_num > 11]
-    print(6)
+    #print(6)
     return train_test_df
 
 
 
-from etl_process import ETL
-path_to_data = r'./data'
-etl = ETL(path_to_data)
-etl.process()
-data = etl.data
-print(data)
-print(0)
-train_test_df = main_pipeline(data)
-print(train_test_df)
+#rom etl_process import ETL
+#path_to_data = r'./data'
+#etl = ETL(path_to_data)
+#data = etl.process()
+#for df in data:
+#    print(data[df].shape)
+#print(0)
+#train_test_df = main_pipeline(data)
+#print(train_test_df)
+#print(train_test_df.shape)

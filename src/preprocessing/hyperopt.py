@@ -59,7 +59,7 @@ class Hyperopt:
         best_xgb_model = self.random_search.best_estimator_
         best_params = self.random_search.best_params_
 
-        return best_xgb_model, best_xgb_model
+        return best_xgb_model, best_params
 
     
 

@@ -1,5 +1,7 @@
 .i*
 data/
+/dist
+/build
 
 **/.ipynb_checkpoints
 **/__pycache__

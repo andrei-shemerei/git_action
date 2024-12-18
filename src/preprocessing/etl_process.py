@@ -19,9 +19,7 @@ class ETL:
     Example usage:
         path_to_data = r'./data'  # Specify the path to your data
         etl = ETL(path_to_data)
-        etl.process()
-
-        processed_data = etl.data
+        data = etl.process()
     """
     def __init__(self, path_to_data):
         self.path_to_data = path_to_data
@@ -121,12 +119,19 @@ class ETL:
         self.encode_data('shops_data', ['city', 'shop_type'])
         self.encode_data('item_categories_data', ['category_sub_type', 'item_category_type'])
         self.transform_test_data()
+
+        # Remove duplicates and select specific columns  
+        self.data['shops_data'] = self.data['shops_data'][['shop_id', 'city', 'shop_type']].drop_duplicates(subset=['shop_id'])
+        self.data['item_categories_data'] = self.data['item_categories_data'][['item_category_id', 'item_category_type', 'category_sub_type']]
+        self.data['items_data'] = self.data['items_data'][['item_id', 'item_category_id']]
     
     
     def process(self):
         """Execute the full ETL pipeline."""
         self.extract_data()
         self.transform()
+        
+        return self.data
 
 
 
@@ -134,7 +139,7 @@ class ETL:
 
 #path_to_data = r'./data'
 #etl = ETL(path_to_data)
-#etl.process()
-#processed_data = etl.data
-#print(processed_data['shops_data'])
+#processed_data= etl.process()
+
+
 
