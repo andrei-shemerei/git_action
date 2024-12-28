@@ -3,7 +3,7 @@ import re
 
 import pandas as pd
 from sklearn.preprocessing import OrdinalEncoder
-from global_var import SHOP_DUPLICATE_SET, CORRECT_CITY_NAME
+from .global_var import SHOP_DUPLICATE_SET, CORRECT_CITY_NAME
 
 
 class ETL:

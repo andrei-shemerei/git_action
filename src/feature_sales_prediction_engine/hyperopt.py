@@ -1,7 +1,7 @@
 from xgboost import XGBRegressor 
 from sklearn.model_selection import RandomizedSearchCV
 
-from global_var import PARAM_SET
+from .global_var import PARAM_SET
 
 
 

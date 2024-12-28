@@ -3,7 +3,7 @@
 Collection of configuration variables
 
 """
-from utils import config_reader
+from .utils import config_reader
 CONFIG_FILE=r"config.yaml"
 
 

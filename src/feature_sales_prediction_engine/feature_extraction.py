@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from itertools import product
-from global_var import FEATURE_SET
+from .global_var import FEATURE_SET
 
 # Step 1: Matrix Construction Functions
 def generate_sales_matrix(df, cols):
