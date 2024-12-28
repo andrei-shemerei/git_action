@@ -1,5 +1,9 @@
 name: Publish Package to TeatPyPI
-on: workflow_dispatch
+on:
+  push:
+    branches:
+      - DS-4.1
+  workflow_dispatch:
 
 jobs:
   publish:

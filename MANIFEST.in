@@ -1,1 +1,1 @@
-include config.yaml
+include feature_sales_prediction_engine/config.yaml
