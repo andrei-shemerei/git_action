@@ -2,11 +2,12 @@ from setuptools import setup, find_packages
 
 setup(
     name="feature_sales_prediction_engine",
-    version="0.0.5",
+    version="0.0.6",
     description="A package for feature sales prediction",
     long_description_content_type="text/markdown",
     packages=["feature_sales_prediction_engine"],
     package_dir={"": "src"},
+    include_package_data=True,
     install_requires=[
         "numpy>=1.21.0",
         "pandas>=1.3.0",
