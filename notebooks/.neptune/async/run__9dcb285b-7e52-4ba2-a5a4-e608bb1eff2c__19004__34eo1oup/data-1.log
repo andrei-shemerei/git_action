@@ -1,0 +1,7 @@
+{"obj": {"type": "AssignString", "path": ["sys", "description"], "value": ""}, "version": 1, "at": 1734958810.7876964}
+{"obj": {"type": "AssignString", "path": ["monitoring", "3ac7d427", "hostname"], "value": "LAPTOP-78EUHOP1"}, "version": 2, "at": 1734958810.7876964}
+{"obj": {"type": "AssignString", "path": ["sys", "hostname"], "value": "LAPTOP-78EUHOP1"}, "version": 3, "at": 1734958810.7886784}
+{"obj": {"type": "AssignString", "path": ["monitoring", "3ac7d427", "pid"], "value": "19004"}, "version": 4, "at": 1734958810.7886784}
+{"obj": {"type": "AssignString", "path": ["monitoring", "3ac7d427", "tid"], "value": "15712"}, "version": 5, "at": 1734958810.7886784}
+{"obj": {"type": "AssignBool", "path": ["sys", "failed"], "value": false}, "version": 6, "at": 1734958810.7886784}
+{"obj": {"type": "UploadFileSet", "path": ["source_code", "files"], "file_globs": ["C:\\Users\\Asus\\ds_project\\**\\*.dvc"], "reset": "False"}, "version": 7, "at": 1734958810.7906802}

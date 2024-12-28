@@ -1,6 +1,8 @@
 .i*
 data/*
+!data/*.dvc
 
+/credentials
 
 /dist
 /build
