@@ -74,6 +74,8 @@ def merge_groupby_mean(df, group_cols, agg_col, new_col_name, dtype='float16'):
     temp = df[df_with_info].groupby(group_cols)[agg_col].mean().reset_index()
     temp.columns = group_cols + [new_col_name]
     df[df_process] = pd.merge(df[df_process], temp, on=group_cols, how='left')
+    del temp
+    gc.collect()
     df[df_process][new_col_name] = df[df_process][new_col_name].astype(dtype)
     return df[df_process]
 
@@ -91,19 +93,24 @@ def create_lags_feature_by_item_cnt_mean(df, feature_set, lags):
 # Step 4: Processing Price Features
 def process_price_features(df, sales_train_data, lags):
     df = merge_groupby_mean([df, sales_train_data], ['item_id'], 'item_price', 'item_id_price_mean')
+    print('4.1-------------------')
     df = merge_groupby_mean([df, sales_train_data], ['date_block_num', 'item_id'], 'item_price', 'date_item_id_price_mean')
-
+    print('4.2-------------------')
+    del sales_train_data
+    gc.collect()
     df = create_lag_feature(df, lags, ['date_item_id_price_mean'])
+    print('4.3-------------------')
 
     for i in lags:
         df[f'delta_price_lag_{i}'] = (df[f'date_item_id_price_mean_lag_{i}'] - df['item_id_price_mean']) / df['item_id_price_mean']
         df[f'delta_price_lag_{i}'] = df[f'delta_price_lag_{i}'].astype('float16')
-
+    print('4.4-------------------')
     df['nearest_delta_price_lag'] = df.apply(select_changes, axis=1, lags=lags)
     df['nearest_delta_price_lag'] = df['nearest_delta_price_lag'].astype('float16')
-
+    print('4.5-------------------')
     drop_columns = ['item_id_price_mean', 'date_item_id_price_mean'] + [f'delta_price_lag_{i}' for i in lags]
     df.drop(columns=drop_columns, inplace=True)
+    print('4.6-------------------')
     return df
 
 
