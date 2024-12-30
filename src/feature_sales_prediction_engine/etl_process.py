@@ -1,9 +1,12 @@
 import os
 import re
 
+import numpy as np
 import pandas as pd
 from sklearn.preprocessing import OrdinalEncoder
 from .global_var import SHOP_DUPLICATE_SET, CORRECT_CITY_NAME
+import gc
+from itertools import product
 
 
 class ETL:
@@ -124,14 +127,76 @@ class ETL:
         self.data['shops_data'] = self.data['shops_data'][['shop_id', 'city', 'shop_type']].drop_duplicates(subset=['shop_id'])
         self.data['item_categories_data'] = self.data['item_categories_data'][['item_category_id', 'item_category_type', 'category_sub_type']]
         self.data['items_data'] = self.data['items_data'][['item_id', 'item_category_id']]
+
+        # Step 1: Matrix Construction Functions
+    def generate_sales_matrix(df, cols):
+        """
+        Generates a matrix of combinations for 'date_block_num', 'shop_id', and 'item_id'.
+        """
+        matrix = []
+        for i in range(34):
+            sales = df[df['date_block_num'] == i]
+            matrix.append(np.array(list(product([i], sales['shop_id'].unique(), sales['item_id'].unique())), dtype=np.int16))
+        return np.vstack(matrix)
+
+
+    def create_matrix_dataframe(matrix, cols):
+        """
+        Converts the generated matrix into a pandas DataFrame, and sorts the values.
+        """
+        matrix_df = pd.DataFrame(data=matrix, columns=cols)
+    
+        return matrix_df.sort_values(cols).reset_index(drop=True)
+
+
+    def add_item_cnt_month(matrix_df, df, cols):
+        """
+        Merges item_cnt_month data into the matrix DataFrame and appends test data.
+        """
+        matrix_df = pd.merge(matrix_df, df.groupby(cols)['item_cnt_day'].sum().reset_index(), on=cols, how='left').fillna(0)
+        matrix_df['item_cnt_month'] = matrix_df['item_cnt_day'].astype('float16')
+        matrix_df.drop(columns=['item_cnt_day'], inplace=True)
+        return matrix_df
+
+
+    def append_test_data(matrix_df, test_data):
+        """
+        Appends test data to the matrix DataFrame.
+        """
+        matrix_df = pd.concat([matrix_df, test_data], ignore_index=True)
+        matrix_df['item_cnt_month'] = matrix_df['item_cnt_month'].fillna(0)
+        return matrix_df
+
+
+    def merge_with_external_data(matrix_df, items_data, item_categories_data, shops_data):
+        """
+        Merges item, category, and shop data into the matrix DataFrame.
+        """
+        matrix_df = pd.merge(matrix_df, items_data, on='item_id', how='left')
+        matrix_df = pd.merge(matrix_df, item_categories_data, on='item_category_id', how='left')
+        matrix_df = pd.merge(matrix_df, shops_data, on='shop_id', how='left')
+        return matrix_df
+    
     
     
     def process(self):
         """Execute the full ETL pipeline."""
         self.extract_data()
         self.transform()
+
+        # Step 1: Matrix Creation
+        cols = ['date_block_num', 'shop_id', 'item_id']
+
+        matrix = self.generate_sales_matrix(self.data['sales_train_data'], cols)
+        matrix_df = self.create_matrix_dataframe(matrix, cols)
+        del matrix
+        gc.collect()
+        matrix_df = self.add_item_cnt_month(matrix_df, self.data['sales_train_data'], cols)
+        matrix_df = self.append_test_data(matrix_df, self.data['test_data'])
+        matrix_df = self.merge_with_external_data(matrix_df, self.data['items_data'], self.data['item_categories_data'], self.data['shops_data'])
+        print('1 --------------------------------')
         
-        return self.data
+        return matrix_df
 
 
 

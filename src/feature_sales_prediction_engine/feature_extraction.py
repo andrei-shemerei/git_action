@@ -151,7 +151,7 @@ def fill_na(df):
 
 
 # Main pipeline
-def main_pipeline(data):
+def main_pipeline(matrix_df, sales_train_data):
     """
     Call the pipeline with the required datasets
     For example: 
@@ -163,30 +163,23 @@ def main_pipeline(data):
         items_data
         item_categories_data
         shops_data
-    """
-    sales_train_data = data['sales_train_data']
-    test_data = data['test_data']
-    items_data = data['items_data']
-    item_categories_data = data['item_categories_data']
-    shops_data = data['shops_data']
-    
-    
+    """    
     
     # Step 1: Matrix Creation
     cols = ['date_block_num', 'shop_id', 'item_id']
 
-    matrix = generate_sales_matrix(sales_train_data, cols)
-    matrix_df = create_matrix_dataframe(matrix, cols)
-    del matrix
-    gc.collect()
-    matrix_df = add_item_cnt_month(matrix_df, sales_train_data, cols)
-    matrix_df = append_test_data(matrix_df, test_data)
-    del test_data
-    gc.collect()
-    matrix_df = merge_with_external_data(matrix_df, items_data, item_categories_data, shops_data)
-    del items_data, item_categories_data, shops_data
-    gc.collect()
-    print('1 --------------------------------')
+    #matrix = generate_sales_matrix(sales_train_data, cols)
+    #matrix_df = create_matrix_dataframe(matrix, cols)
+    #del matrix
+    #gc.collect()
+    #matrix_df = add_item_cnt_month(matrix_df, sales_train_data, cols)
+    #matrix_df = append_test_data(matrix_df, test_data)
+    #del test_data
+    #gc.collect()
+    #matrix_df = merge_with_external_data(matrix_df, items_data, item_categories_data, shops_data)
+    #del items_data, item_categories_data, shops_data
+    #gc.collect()
+    #print('1 --------------------------------')
     # Step 2: Create lags for item_cnt_month
     lags = [1, 2, 3, 6, 12]
     train_test_df = create_lag_feature(matrix_df, lags, ['item_cnt_month'])
