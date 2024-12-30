@@ -186,14 +186,24 @@ class ETL:
 
         # Step 1: Matrix Creation
         cols = ['date_block_num', 'shop_id', 'item_id']
-
-        matrix = self.generate_sales_matrix(self.data['sales_train_data'], cols)
+        df1 = self.data['sales_train_data']  
+        matrix = self.generate_sales_matrix(df1, cols)
         matrix_df = self.create_matrix_dataframe(matrix, cols)
         del matrix
         gc.collect()
-        matrix_df = self.add_item_cnt_month(matrix_df, self.data['sales_train_data'], cols)
-        matrix_df = self.append_test_data(matrix_df, self.data['test_data'])
-        matrix_df = self.merge_with_external_data(matrix_df, self.data['items_data'], self.data['item_categories_data'], self.data['shops_data'])
+        matrix_df = self.add_item_cnt_month(matrix_df, df1, cols)
+        del df1
+        gc.collect()
+        df2 = self.data['test_data']
+        matrix_df = self.append_test_data(matrix_df, df2)
+        del df2
+        gc.collect()
+        df3= self.data['items_data']
+        df4 = self.data['item_categories_data']
+        df5 = self.data['shops_data']
+        matrix_df = self.merge_with_external_data(matrix_df, df3, df4, df5 )
+        del df3, df4, df5
+        gc.collect()
         print('1 --------------------------------')
         
         return matrix_df, self.data['sales_train_data']

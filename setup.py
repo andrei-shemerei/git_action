@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="feature_sales_prediction_engine",
-    version="0.0.12",
+    version="0.0.13",
     description="A package for feature sales prediction",
     long_description_content_type="text/markdown",
     packages=["feature_sales_prediction_engine"],
