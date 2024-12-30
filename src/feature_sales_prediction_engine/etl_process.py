@@ -129,7 +129,7 @@ class ETL:
         self.data['items_data'] = self.data['items_data'][['item_id', 'item_category_id']]
 
         # Step 1: Matrix Construction Functions
-    def generate_sales_matrix(df, cols):
+    def generate_sales_matrix(self, df, cols):
         """
         Generates a matrix of combinations for 'date_block_num', 'shop_id', and 'item_id'.
         """
@@ -140,7 +140,7 @@ class ETL:
         return np.vstack(matrix)
 
 
-    def create_matrix_dataframe(matrix, cols):
+    def create_matrix_dataframe( matrix, cols):
         """
         Converts the generated matrix into a pandas DataFrame, and sorts the values.
         """
@@ -149,7 +149,7 @@ class ETL:
         return matrix_df.sort_values(cols).reset_index(drop=True)
 
 
-    def add_item_cnt_month(matrix_df, df, cols):
+    def add_item_cnt_month(self, matrix_df, df, cols):
         """
         Merges item_cnt_month data into the matrix DataFrame and appends test data.
         """
@@ -159,7 +159,7 @@ class ETL:
         return matrix_df
 
 
-    def append_test_data(matrix_df, test_data):
+    def append_test_data(self, matrix_df, test_data):
         """
         Appends test data to the matrix DataFrame.
         """
@@ -168,7 +168,7 @@ class ETL:
         return matrix_df
 
 
-    def merge_with_external_data(matrix_df, items_data, item_categories_data, shops_data):
+    def merge_with_external_data(self, matrix_df, items_data, item_categories_data, shops_data):
         """
         Merges item, category, and shop data into the matrix DataFrame.
         """
@@ -196,7 +196,7 @@ class ETL:
         matrix_df = self.merge_with_external_data(matrix_df, self.data['items_data'], self.data['item_categories_data'], self.data['shops_data'])
         print('1 --------------------------------')
         
-        return matrix_df
+        return matrix_df, self.data['sales_train_data']
 
 
 
