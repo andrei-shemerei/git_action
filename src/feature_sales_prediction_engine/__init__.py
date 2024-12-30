@@ -4,7 +4,7 @@ from .etl_process import ETL
 from .feature_extraction import main_pipeline
 from .validation_schema import Validator
 
-__version__ = '0.0.13'
+__version__ = '0.0.14'
 
 
 # Убедимся, что все глобальные переменные инициализируются автоматически
